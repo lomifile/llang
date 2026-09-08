@@ -1,0 +1,14 @@
+[package]
+name = "chunk"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+# Bytecode + constant pool; constants are typed values.
+types.workspace = true

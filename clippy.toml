@@ -1,0 +1,5 @@
+msrv = "1.97"
+# A compiler passes big AST/IR types around; the default 128-byte threshold
+# fires constantly and teaches you to ignore clippy.
+too-many-arguments-threshold = 8
+type-complexity-threshold = 500

@@ -1,0 +1,6 @@
+# Pins the toolchain for everyone who clones this repo. rustup installs it
+# automatically on the first cargo command — no "works on my machine".
+[toolchain]
+channel = "1.97.1"
+components = ["rustfmt", "clippy", "rust-src", "rust-analyzer"]
+profile = "default"

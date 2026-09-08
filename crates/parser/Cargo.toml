@@ -1,0 +1,16 @@
+[package]
+name = "parser"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+# Drives the lexer over tokens and builds the AST.
+token.workspace = true
+lexer.workspace = true
+ast.workspace = true

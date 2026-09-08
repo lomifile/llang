@@ -1,0 +1,25 @@
+# Rust
+/target
+**/*.rs.bk
+*.pdb
+
+# Cargo.lock IS committed: `lang` is a binary, and a reproducible dependency
+# graph is worth more than floating versions.
+
+# Profiling / benchmark output
+perf.data
+perf.data.old
+flamegraph.svg
+*.profraw
+*.profdata
+
+# Editors / OS
+.idea/
+.vscode/*
+!.vscode/settings.json
+*.swp
+.DS_Store
+
+# Scratch
+/scratch
+/tmp

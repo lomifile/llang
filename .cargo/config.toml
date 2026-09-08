@@ -1,0 +1,26 @@
+[alias]
+c  = "check --workspace --all-targets"
+t  = "test --workspace --all-targets"
+l  = "clippy --workspace --all-targets --all-features"
+# Same lints CI should run: warnings are failures.
+lint = "clippy --workspace --all-targets --all-features -- -D warnings"
+# Open this project's own docs, deps included.
+d  = "doc --workspace --no-deps --open"
+
+[build]
+# Share one target dir across all crates in the workspace (already the default
+# here, stated so it survives future nesting).
+target-dir = "target"
+
+[term]
+color = "always"
+
+# ─── Faster linking (opt-in) ──────────────────────────────────────────────────
+# Linking dominates incremental rebuild time. Neither mold nor lld is installed
+# right now, so this is left commented out — installing one and uncommenting is
+# the single biggest build-speed win available.
+#
+#   sudo pacman -S mold        then uncomment:
+#
+# [target.x86_64-unknown-linux-gnu]
+# rustflags = ["-C", "link-arg=-fuse-ld=mold"]

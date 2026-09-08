@@ -1,0 +1,15 @@
+[package]
+name = "ast"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+# Nodes carry tokens (spans, operators) and type annotations.
+token.workspace = true
+types.workspace = true

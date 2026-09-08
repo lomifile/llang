@@ -1,0 +1,16 @@
+[package]
+name = "compiler"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+# Lowers the AST into a chunk.
+ast.workspace = true
+chunk.workspace = true
+types.workspace = true

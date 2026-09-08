@@ -1,0 +1,117 @@
+# ─── Workspace ────────────────────────────────────────────────────────────────
+# The root package `lang` is automatically a workspace member. To add another
+# crate later:  cargo new --lib crates/lang-parser
+# It gets picked up by the `crates/*` glob with zero further config.
+[workspace]
+resolver = "3"
+members = ["crates/*"]
+
+# Metadata shared by every crate. In a member Cargo.toml write:
+#   version.workspace = true
+#   edition.workspace = true
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.97"
+authors = ["Filip Ivanusec <fivanusec@enseso.com>"]
+license = "MIT OR Apache-2.0"
+repository = ""
+
+# ─── Dependency versions live HERE, once ──────────────────────────────────────
+# Add a crate:            cargo add <name> --package lang
+# Pin it for the whole workspace instead:
+#   1. put `<name> = "x.y"` in this table
+#   2. in each crate that needs it:  `<name>.workspace = true`
+# That way a version bump is a one-line change, not a hunt across files.
+[workspace.dependencies]
+# Internal crates. Declared once here so a consumer only writes
+# `token.workspace = true` and the path never gets duplicated.
+token    = { path = "crates/token" }
+types    = { path = "crates/types" }
+ast      = { path = "crates/ast" }
+lexer    = { path = "crates/lexer" }
+parser   = { path = "crates/parser" }
+chunk    = { path = "crates/chunk" }
+compiler = { path = "crates/compiler" }
+vm       = { path = "crates/vm" }
+
+# External crates go below, e.g.  thiserror = "2"
+
+# ─── Lints, applied workspace-wide ────────────────────────────────────────────
+# Members opt in with:  [lints] workspace = true
+[workspace.lints.rust]
+unsafe_code = "warn"
+missing_debug_implementations = "warn"
+unreachable_pub = "warn"
+unused_qualifications = "warn"
+
+[workspace.lints.clippy]
+# Baseline: everything in clippy::pedantic as a warning, minus the noisy ones.
+pedantic = { level = "warn", priority = -1 }
+module_name_repetitions = "allow"
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"
+must_use_candidate = "allow"
+# Real footguns, promoted to hard errors.
+unwrap_used = "warn"
+todo = "warn"
+dbg_macro = "warn"
+print_stdout = "allow"
+
+# ─── Package ──────────────────────────────────────────────────────────────────
+[package]
+name = "lang"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "A programming language"
+
+[lints]
+workspace = true
+
+[dependencies]
+# The driver: source -> parser -> compiler -> vm.
+lexer.workspace = true
+parser.workspace = true
+ast.workspace = true
+compiler.workspace = true
+chunk.workspace = true
+vm.workspace = true
+
+[dev-dependencies]
+
+# ─── Profiles ─────────────────────────────────────────────────────────────────
+[profile.dev]
+# Dependencies are compiled once and rarely change — optimize them even in a
+# debug build. Costs one slow first build, makes every debug run much faster.
+opt-level = 0
+debug = true
+
+[profile.dev.package."*"]
+opt-level = 2
+debug = false
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 16
+panic = "abort"
+strip = "debuginfo"
+
+# `cargo build --profile release-debug` — release speed, keeps symbols and
+# backtraces. What you want for profiling and for debugging release-only bugs.
+[profile.release-debug]
+inherits = "release"
+debug = true
+strip = "none"
+panic = "unwind"
+
+# `cargo bench` / criterion: max optimization, single CGU, symbols intact.
+[profile.bench]
+inherits = "release"
+lto = "fat"
+codegen-units = 1
+debug = true
+strip = "none"
