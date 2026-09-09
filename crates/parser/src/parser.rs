@@ -1,5 +1,7 @@
+use std::error::Error;
+
 use crate::error::ParserError;
-use ast::statement::{Expression, ExpressionKind};
+use ast::statement::{Expression, ExpressionKind, Statement, StatementKind};
 use token::{
     keywords::{Keyword, Operator, Punct},
     token::{Span, Token, TokenKind},
@@ -46,6 +48,24 @@ impl Parser {
         Err(ParserError {
             message: error_message,
             span: current.span,
+        })
+    }
+
+    fn parse_return(&mut self) -> Result<Statement, ParserError> {
+        let start = self.tokens[self.position].clone();
+        self.advance();
+
+        let value = if self.tokens[self.position].kind == TokenKind::Punct(Punct::Semicolon) {
+            None
+        } else {
+            Some(self.parse_expression()?)
+        };
+
+        let _ = self.expect(&TokenKind::Punct(Punct::Semicolon));
+
+        Ok(Statement {
+            kind: StatementKind::Return(value),
+            span: Span::merge(start.span, self.tokens[self.position].span),
         })
     }
 
@@ -182,6 +202,19 @@ impl Parser {
             };
         }
         Ok(left)
+    }
+
+    fn parse_statement(&mut self) -> Result<Statement, ParserError> {
+        match &self.peek().kind {
+            TokenKind::Keyword(Keyword::If) => todo!(),
+            TokenKind::Keyword(Keyword::While) => todo!(),
+            TokenKind::Keyword(Keyword::For) => todo!(),
+            TokenKind::Keyword(Keyword::Return) => todo!(),
+            TokenKind::Punct(Punct::LBrace) => todo!(),
+            TokenKind::Operator(Operator::Increment) => todo!(),
+            TokenKind::Operator(Operator::Decrement) => todo!(),
+            _ => todo!(),
+        }
     }
 
     fn parse_expression(&mut self) -> Result<Expression, ParserError> {
