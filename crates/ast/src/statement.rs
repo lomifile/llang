@@ -69,7 +69,7 @@ pub enum StatementKind {
     For {
         init: ForInit,
         condition: Option<Expression>,
-        step: Option<Expression>,
+        step: Option<ForStep>,
         body: Box<Statement>,
     },
     Return(Option<Expression>),
@@ -85,9 +85,19 @@ pub struct Statement {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+pub enum ForStep {
+    Assign {
+        target: Expression,
+        value: Expression,
+    },
+    Increment(Expression),
+    Decrement(Expression),
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub enum ForInit {
     Let(Box<Declaration>),
-    Expression(Expression),
+    Step(ForStep),
     None,
 }
 
