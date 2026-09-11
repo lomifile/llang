@@ -1,6 +1,6 @@
 use super::{at, source};
-use ast::statement::Type;
 use crate::error::ParserError;
+use ast::statement::Type;
 
 fn ty(src: &str) -> Type {
     source(src)

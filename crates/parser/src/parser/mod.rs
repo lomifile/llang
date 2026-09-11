@@ -7,7 +7,7 @@ mod types;
 mod tests;
 
 use crate::error::ParserError;
-use token::token::{Token, TokenKind};
+use token::token::{Span, Token, TokenKind};
 
 #[derive(Debug)]
 pub struct Parser {
@@ -47,6 +47,26 @@ impl Parser {
             return Ok(self.advance());
         }
         let error_message = format!("expected: {}, got: {}", match_to, current.kind);
+        Err(ParserError {
+            message: error_message,
+            span: current.span,
+        })
+    }
+
+    fn expect_closing(
+        &mut self,
+        close: &TokenKind,
+        open: &TokenKind,
+        open_span: Span,
+    ) -> Result<Token, ParserError> {
+        let current = &self.tokens[self.position];
+        if &current.kind == close {
+            return Ok(self.advance());
+        }
+        let error_message = format!(
+            "expected: {close} to close {open} opened at {open_span}, got: {}",
+            current.kind
+        );
         Err(ParserError {
             message: error_message,
             span: current.span,

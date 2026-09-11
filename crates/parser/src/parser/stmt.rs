@@ -1,9 +1,11 @@
 use super::Parser;
 use crate::error::ParserError;
-use ast::statement::{Declaration, ForInit, ForStep, Statement, StatementKind};
+use ast::statement::{
+    Declaration, Expression, ExpressionKind, ForInit, ForStep, Statement, StatementKind,
+};
 use token::{
     keywords::{Keyword, Operator, Punct},
-    token::{Span, Token, TokenKind},
+    token::{Span, TokenKind},
 };
 
 impl Parser {
@@ -45,6 +47,100 @@ impl Parser {
             kind: StatementKind::Block(declarations),
             span: Span::merge(start, close.span),
         })
+    }
+
+    pub(crate) fn parse_call_args(&mut self) -> Result<Vec<Expression>, ParserError> {
+        let mut args = Vec::new();
+
+        if self.check(&TokenKind::Punct(Punct::RParen)) {
+            return Ok(args);
+        }
+
+        loop {
+            args.push(self.parse_expression()?);
+            if self.check(&TokenKind::Punct(Punct::Comma)) {
+                self.advance();
+                continue;
+            }
+
+            break;
+        }
+
+        Ok(args)
+    }
+
+    pub(crate) fn parse_postfix(&mut self) -> Result<Expression, ParserError> {
+        let mut expression = self.parse_primary()?;
+
+        loop {
+            if self.check(&TokenKind::Punct(Punct::LParen)) {
+                let name = match &expression.kind {
+                    ExpressionKind::Identifier(s) => s.clone(),
+                    _ => {
+                        return Err(ParserError {
+                            message: "can only call functions by name".to_string(),
+                            span: expression.span,
+                        });
+                    }
+                };
+
+                let call_start = expression.span;
+                let open_span = self.peek().span;
+                self.advance();
+                let args = self.parse_call_args()?;
+                let close = self.expect_closing(
+                    &TokenKind::Punct(Punct::RParen),
+                    &TokenKind::Punct(Punct::LParen),
+                    open_span,
+                )?;
+                expression = Expression {
+                    kind: ExpressionKind::Call { callee: name, args },
+                    span: Span::merge(call_start, close.span),
+                };
+            } else if self.check(&TokenKind::Punct(Punct::LBracket)) {
+                let open_span = self.peek().span;
+                self.advance();
+                let index = self.parse_expression()?;
+                let close = self.expect_closing(
+                    &TokenKind::Punct(Punct::RBracket),
+                    &TokenKind::Punct(Punct::LBracket),
+                    open_span,
+                )?;
+                let target_span = expression.span;
+                let close_span = close.span;
+                expression = Expression {
+                    kind: ExpressionKind::Index {
+                        target: Box::new(expression),
+                        index: Box::new(index),
+                    },
+                    span: Span::merge(target_span, close_span),
+                };
+            } else if self.check(&TokenKind::Punct(Punct::Dot)) {
+                let target_span = expression.span;
+                self.advance();
+                let field_token = self.advance();
+                let field = match field_token.kind {
+                    TokenKind::Identifier(s) => s,
+                    other => {
+                        return Err(ParserError {
+                            message: format!("expected: a field name after `.`, got: {other}"),
+                            span: field_token.span,
+                        });
+                    }
+                };
+                expression = Expression {
+                    kind: ExpressionKind::Member {
+                        target: Box::new(expression),
+                        field,
+                    },
+                    span: Span::merge(target_span, field_token.span),
+                };
+            } else {
+                break;
+            }
+        }
+
+        Ok(expression)
     }
 
     fn parse_for_step(&mut self) -> Result<ForStep, ParserError> {

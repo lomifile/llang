@@ -10,4 +10,6 @@ license.workspace = true
 workspace = true
 
 [dependencies]
-# Leaf: type and runtime-value representations.
+token.workspace = true
+lexer.workspace = true
+ast.workspace = true

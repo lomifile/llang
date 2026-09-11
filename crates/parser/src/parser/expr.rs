@@ -143,7 +143,8 @@ impl Parser {
                 span,
             });
         }
-        self.parse_primary()
+
+        self.parse_postfix()
     }
 
     pub fn parse_primary(&mut self) -> Result<Expression, ParserError> {
@@ -170,13 +171,82 @@ impl Parser {
             TokenKind::Punct(Punct::LParen) => {
                 self.advance();
                 let inner = self.parse_expression()?;
-                self.expect(&TokenKind::Punct(Punct::RParen))?;
+                self.expect_closing(
+                    &TokenKind::Punct(Punct::RParen),
+                    &TokenKind::Punct(Punct::LParen),
+                    span,
+                )?;
                 Ok(inner)
+            }
+
+            TokenKind::Punct(Punct::LBracket) => {
+                self.advance();
+
+                let mut elements = Vec::new();
+                if !self.check(&TokenKind::Punct(Punct::RBracket)) {
+                    loop {
+                        elements.push(self.parse_expression()?);
+                        if self.check(&TokenKind::Punct(Punct::Comma)) {
+                            self.advance();
+                        } else {
+                            break;
+                        }
+                    }
+                }
+
+                let close = self.expect_closing(
+                    &TokenKind::Punct(Punct::RBracket),
+                    &TokenKind::Punct(Punct::LBracket),
+                    span,
+                )?;
+                Ok(Expression {
+                    kind: ExpressionKind::ArrayLiteral(elements),
+                    span: Span::merge(span, close.span),
+                })
+            }
+
+            TokenKind::Punct(Punct::LBrace) => {
+                self.advance();
+
+                let mut pairs = Vec::new();
+                if !self.check(&TokenKind::Punct(Punct::RBrace)) {
+                    loop {
+                        let key_token = self.advance();
+                        let key = match key_token.kind {
+                            TokenKind::Identifier(s) | TokenKind::Str(s) => s,
+                            other => {
+                                return Err(ParserError {
+                                    message: format!("expected: an object key, got: {other}"),
+                                    span: key_token.span,
+                                });
+                            }
+                        };
+
+                        self.expect(&TokenKind::Punct(Punct::Colon))?;
+                        pairs.push((key, self.parse_expression()?));
+
+                        if self.check(&TokenKind::Punct(Punct::Comma)) {
+                            self.advance();
+                        } else {
+                            break;
+                        }
+                    }
+                }
+
+                let close = self.expect_closing(
+                    &TokenKind::Punct(Punct::RBrace),
+                    &TokenKind::Punct(Punct::LBrace),
+                    span,
+                )?;
+                Ok(Expression {
+                    kind: ExpressionKind::ObjectLiteral(pairs),
+                    span: Span::merge(span, close.span),
+                })
             }
 
             _ => {
                 let current = self.peek();
-                let error_message = format!("cannot parse: {} on {}", current.kind, current.span);
+                let error_message = format!("expected: an expression, got: {}", current.kind);
                 Err(ParserError {
                     message: error_message,
                     span: current.span,

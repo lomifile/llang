@@ -407,11 +407,11 @@ fn a_for_step_increment_takes_a_primary_not_a_whole_expression() {
 fn a_for_requires_both_of_its_semicolons() {
     assert_eq!(
         error("for () { }").message,
-        "cannot parse: punctuation `)` on 1:6"
+        "expected: an expression, got: punctuation `)`"
     );
     assert_eq!(
         error("for (;) { }").message,
-        "cannot parse: punctuation `)` on 1:7"
+        "expected: an expression, got: punctuation `)`"
     );
 }
 
@@ -419,6 +419,6 @@ fn a_for_requires_both_of_its_semicolons() {
 fn a_for_requires_a_body() {
     assert_eq!(
         error("for (;;)").message,
-        "cannot parse: end of input on 1:9"
+        "expected: an expression, got: end of input"
     );
 }

@@ -81,7 +81,10 @@ fn parse_primary_rejects_a_non_expression_token() {
         .parse_primary()
         .expect_err("a closing brace starts no expression");
 
-    assert_eq!(error.message, "cannot parse: punctuation `}` on 1:1");
+    assert_eq!(
+        error.message,
+        "expected: an expression, got: punctuation `}`"
+    );
     assert_eq!(error.span, span(1, 1));
 }
 
@@ -355,7 +358,7 @@ fn an_unclosed_group_reports_the_missing_paren() {
 
     assert_eq!(
         error.message,
-        "expected: punctuation `)`, got: end of input"
+        "expected: punctuation `)` to close punctuation `(` opened at 1:1, got: end of input"
     );
 }
 
@@ -365,7 +368,7 @@ fn a_missing_right_operand_reports_the_offending_token() {
         .parse_expression()
         .expect_err("plus has no right operand");
 
-    assert_eq!(error.message, "cannot parse: end of input on 1:3");
+    assert_eq!(error.message, "expected: an expression, got: end of input");
     assert_eq!(error.span, span(3, 0));
 }
 
@@ -422,57 +425,295 @@ fn parse_expression_stops_at_the_first_token_it_cannot_use() {
 }
 
 #[test]
-fn an_array_literal_is_not_parsed_yet() {
-    let error = parser(vec![
-        TokenKind::Punct(Punct::LBracket),
-        num(1.0),
-        TokenKind::Punct(Punct::RBracket),
-    ])
-    .parse_expression()
-    .expect_err("array literals have an AST node but no syntax");
-
-    assert_eq!(error.message, "cannot parse: punctuation `[` on 1:1");
-}
-
-#[test]
-fn an_object_literal_is_not_parsed_yet() {
-    let error = parser(vec![
-        TokenKind::Punct(Punct::LBrace),
-        TokenKind::Punct(Punct::RBrace),
-    ])
-    .parse_expression()
-    .expect_err("object literals have an AST node but no syntax");
-
-    assert_eq!(error.message, "cannot parse: punctuation `{` on 1:1");
-}
-
-#[test]
-fn a_call_is_not_parsed_yet() {
-    let mut p = parser(vec![
-        TokenKind::Identifier("f".to_string()),
-        TokenKind::Punct(Punct::LParen),
-        TokenKind::Punct(Punct::RParen),
-    ]);
-
-    let parsed = p.parse_expression().expect("the callee parses on its own");
-
-    assert_eq!(parsed.kind, ExpressionKind::Identifier("f".to_string()));
+fn an_empty_array_literal_parses() {
     assert_eq!(
-        p.peek().kind,
-        TokenKind::Punct(Punct::LParen),
-        "the argument list is left unconsumed"
+        kind(vec![
+            TokenKind::Punct(Punct::LBracket),
+            TokenKind::Punct(Punct::RBracket),
+        ]),
+        ExpressionKind::ArrayLiteral(vec![])
     );
 }
 
 #[test]
-fn indexing_and_member_access_are_not_parsed_yet() {
-    let mut p = parser(vec![
+fn an_array_literal_parses_its_elements() {
+    assert_eq!(
+        kind(vec![
+            TokenKind::Punct(Punct::LBracket),
+            num(1.0),
+            TokenKind::Punct(Punct::Comma),
+            num(2.0),
+            TokenKind::Punct(Punct::RBracket),
+        ]),
+        ExpressionKind::ArrayLiteral(vec![at(lit(1.0), 2), at(lit(2.0), 4)])
+    );
+}
+
+#[test]
+fn an_array_span_covers_both_brackets() {
+    assert_eq!(
+        expr(vec![
+            TokenKind::Punct(Punct::LBracket),
+            num(1.0),
+            TokenKind::Punct(Punct::RBracket),
+        ])
+        .span,
+        span(1, 3)
+    );
+}
+
+#[test]
+fn an_unclosed_array_points_back_at_its_opening_bracket() {
+    let error = parser(vec![TokenKind::Punct(Punct::LBracket), num(1.0)])
+        .parse_expression()
+        .expect_err("the array is never closed");
+
+    assert_eq!(
+        error.message,
+        "expected: punctuation `]` to close punctuation `[` opened at 1:1, got: end of input"
+    );
+}
+
+#[test]
+fn an_unclosed_object_points_back_at_its_opening_brace() {
+    let error = parser(vec![
+        TokenKind::Punct(Punct::LBrace),
+        TokenKind::Identifier("a".to_string()),
+        TokenKind::Punct(Punct::Colon),
+        num(1.0),
+    ])
+    .parse_expression()
+    .expect_err("the object is never closed");
+
+    assert_eq!(
+        error.message,
+        "expected: punctuation `}` to close punctuation `{` opened at 1:1, got: end of input"
+    );
+}
+
+#[test]
+fn an_unclosed_delimiter_is_reported_at_the_token_that_should_have_closed_it() {
+    let error = parser(vec![TokenKind::Punct(Punct::LBracket), num(1.0)])
+        .parse_expression()
+        .expect_err("the array is never closed");
+
+    assert_eq!(error.span, span(3, 0));
+}
+
+#[test]
+fn an_empty_object_literal_parses() {
+    assert_eq!(
+        kind(vec![
+            TokenKind::Punct(Punct::LBrace),
+            TokenKind::Punct(Punct::RBrace),
+        ]),
+        ExpressionKind::ObjectLiteral(vec![])
+    );
+}
+
+#[test]
+fn an_object_literal_takes_identifier_and_string_keys() {
+    assert_eq!(
+        kind(vec![
+            TokenKind::Punct(Punct::LBrace),
+            TokenKind::Identifier("a".to_string()),
+            TokenKind::Punct(Punct::Colon),
+            num(1.0),
+            TokenKind::Punct(Punct::Comma),
+            TokenKind::Str("b".to_string()),
+            TokenKind::Punct(Punct::Colon),
+            num(2.0),
+            TokenKind::Punct(Punct::RBrace),
+        ]),
+        ExpressionKind::ObjectLiteral(vec![
+            ("a".to_string(), at(lit(1.0), 4)),
+            ("b".to_string(), at(lit(2.0), 8)),
+        ])
+    );
+}
+
+#[test]
+fn an_object_key_must_be_an_identifier_or_a_string() {
+    let error = parser(vec![
+        TokenKind::Punct(Punct::LBrace),
+        num(1.0),
+        TokenKind::Punct(Punct::Colon),
+        num(2.0),
+        TokenKind::Punct(Punct::RBrace),
+    ])
+    .parse_expression()
+    .expect_err("a number is not a key");
+
+    assert_eq!(error.message, "expected: an object key, got: number `1`");
+}
+
+#[test]
+fn a_call_with_no_arguments_parses() {
+    assert_eq!(
+        kind(vec![
+            TokenKind::Identifier("f".to_string()),
+            TokenKind::Punct(Punct::LParen),
+            TokenKind::Punct(Punct::RParen),
+        ]),
+        ExpressionKind::Call {
+            callee: "f".to_string(),
+            args: vec![],
+        }
+    );
+}
+
+#[test]
+fn a_call_parses_its_arguments() {
+    assert_eq!(
+        kind(vec![
+            TokenKind::Identifier("f".to_string()),
+            TokenKind::Punct(Punct::LParen),
+            num(1.0),
+            TokenKind::Punct(Punct::Comma),
+            num(2.0),
+            TokenKind::Punct(Punct::RParen),
+        ]),
+        ExpressionKind::Call {
+            callee: "f".to_string(),
+            args: vec![at(lit(1.0), 3), at(lit(2.0), 5)],
+        }
+    );
+}
+
+#[test]
+fn a_call_span_covers_the_callee_and_the_closing_paren() {
+    assert_eq!(
+        expr(vec![
+            TokenKind::Identifier("f".to_string()),
+            TokenKind::Punct(Punct::LParen),
+            TokenKind::Punct(Punct::RParen),
+        ])
+        .span,
+        span(1, 3)
+    );
+}
+
+#[test]
+fn only_a_named_callee_can_be_called() {
+    let error = parser(vec![
+        num(1.0),
+        TokenKind::Punct(Punct::LParen),
+        TokenKind::Punct(Punct::RParen),
+    ])
+    .parse_expression()
+    .expect_err("a number is not callable");
+
+    assert_eq!(error.message, "can only call functions by name");
+}
+
+#[test]
+fn member_access_parses() {
+    assert_eq!(
+        kind(vec![
+            TokenKind::Identifier("a".to_string()),
+            TokenKind::Punct(Punct::Dot),
+            TokenKind::Identifier("b".to_string()),
+        ]),
+        ExpressionKind::Member {
+            target: Box::new(Expression {
+                kind: ExpressionKind::Identifier("a".to_string()),
+                span: span(1, 1),
+            }),
+            field: "b".to_string(),
+        }
+    );
+}
+
+#[test]
+fn a_member_field_must_be_an_identifier() {
+    let error = parser(vec![
         TokenKind::Identifier("a".to_string()),
         TokenKind::Punct(Punct::Dot),
-        TokenKind::Identifier("b".to_string()),
-    ]);
+        num(1.0),
+    ])
+    .parse_expression()
+    .expect_err("a number is not a field name");
 
-    p.parse_expression().expect("the target parses on its own");
+    assert_eq!(
+        error.message,
+        "expected: a field name after `.`, got: number `1`"
+    );
+}
 
-    assert_eq!(p.peek().kind, TokenKind::Punct(Punct::Dot));
+#[test]
+fn indexing_parses() {
+    assert_eq!(
+        kind(vec![
+            TokenKind::Identifier("a".to_string()),
+            TokenKind::Punct(Punct::LBracket),
+            num(0.0),
+            TokenKind::Punct(Punct::RBracket),
+        ]),
+        ExpressionKind::Index {
+            target: Box::new(Expression {
+                kind: ExpressionKind::Identifier("a".to_string()),
+                span: span(1, 1),
+            }),
+            index: Box::new(at(lit(0.0), 3)),
+        }
+    );
+}
+
+#[test]
+fn an_index_span_covers_the_target_through_the_closing_bracket() {
+    assert_eq!(
+        expr(vec![
+            TokenKind::Identifier("a".to_string()),
+            TokenKind::Punct(Punct::LBracket),
+            num(0.0),
+            TokenKind::Punct(Punct::RBracket),
+        ])
+        .span,
+        span(1, 4)
+    );
+}
+
+#[test]
+fn postfix_operators_chain_left_to_right() {
+    assert_eq!(
+        kind(vec![
+            TokenKind::Identifier("f".to_string()),
+            TokenKind::Punct(Punct::LParen),
+            TokenKind::Punct(Punct::RParen),
+            TokenKind::Punct(Punct::Dot),
+            TokenKind::Identifier("b".to_string()),
+        ]),
+        ExpressionKind::Member {
+            target: Box::new(Expression {
+                kind: ExpressionKind::Call {
+                    callee: "f".to_string(),
+                    args: vec![],
+                },
+                span: span(1, 3),
+            }),
+            field: "b".to_string(),
+        }
+    );
+}
+
+#[test]
+fn a_unary_operator_applies_to_the_whole_postfix_chain() {
+    assert_eq!(
+        kind(vec![
+            op(Operator::Minus),
+            TokenKind::Identifier("f".to_string()),
+            TokenKind::Punct(Punct::LParen),
+            TokenKind::Punct(Punct::RParen),
+        ]),
+        unary(
+            Operator::Minus,
+            Expression {
+                kind: ExpressionKind::Call {
+                    callee: "f".to_string(),
+                    args: vec![],
+                },
+                span: span(2, 3),
+            }
+        )
+    );
 }

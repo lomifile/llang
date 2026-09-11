@@ -1,7 +1,5 @@
 use super::{at, declaration, declaration_kind, error};
-use ast::statement::{
-    DeclarationKind, ExpressionKind, FunctionParam, StatementKind, Type,
-};
+use ast::statement::{DeclarationKind, ExpressionKind, FunctionParam, StatementKind, Type};
 
 fn let_parts(src: &str) -> (String, Type, ExpressionKind) {
     match declaration_kind(src) {

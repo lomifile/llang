@@ -11,3 +11,6 @@ workspace = true
 
 [dependencies]
 # Leaf: token kinds, spans, literal payloads.
+token.workspace = true
+lexer.workspace = true
+ast.workspace = true
