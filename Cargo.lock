@@ -7,7 +7,6 @@ name = "ast"
 version = "0.1.0"
 dependencies = [
  "token",
- "types",
 ]
 
 [[package]]
@@ -61,6 +60,12 @@ version = "0.1.0"
 [[package]]
 name = "types"
 version = "0.1.0"
+dependencies = [
+ "ast",
+ "lexer",
+ "parser",
+ "token",
+]
 
 [[package]]
 name = "vm"

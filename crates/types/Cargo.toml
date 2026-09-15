@@ -10,6 +10,9 @@ license.workspace = true
 workspace = true
 
 [dependencies]
-token.workspace = true
-lexer.workspace = true
 ast.workspace = true
+token.workspace = true
+
+[dev-dependencies]
+lexer.workspace = true
+parser.workspace = true

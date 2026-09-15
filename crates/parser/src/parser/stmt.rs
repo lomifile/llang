@@ -9,7 +9,7 @@ use token::{
 };
 
 impl Parser {
-    pub(super) fn parse_program(&mut self) -> Result<Vec<Declaration>, ParserError> {
+    pub fn parse_program(&mut self) -> Result<Vec<Declaration>, ParserError> {
         let mut declarations = Vec::new();
 
         while !self.is_at_end() {

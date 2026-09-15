@@ -1,6 +1,9 @@
+use token::token::Span;
+
 #[derive(Debug)]
 pub struct TypeError {
     pub message: String,
+    pub span: Span,
 }
 
 impl std::fmt::Display for TypeError {

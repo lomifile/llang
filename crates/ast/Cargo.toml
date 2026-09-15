@@ -10,6 +10,5 @@ license.workspace = true
 workspace = true
 
 [dependencies]
-# Nodes carry tokens (spans, operators) and type annotations.
+# Nodes carry tokens (spans, operators).
 token.workspace = true
-types.workspace = true

@@ -1,13 +1,15 @@
 use crate::error::TypeError;
 use ast::statement::Type;
 use std::collections::HashMap;
+use token::token::Span;
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Binding {
-    binding_type: Type,
-    mutable: bool,
+    pub binding_type: Type,
+    pub mutable: bool,
 }
 
+#[derive(Debug)]
 pub struct Environment {
     scopes: Vec<HashMap<String, Binding>>,
 }
@@ -33,12 +35,19 @@ impl Environment {
         self.scopes.pop()
     }
 
-    pub fn define(&mut self, name: String, typ: Type, mutable: bool) -> Result<(), TypeError> {
+    pub fn define(
+        &mut self,
+        name: String,
+        typ: Type,
+        mutable: bool,
+        span: Span,
+    ) -> Result<(), TypeError> {
         let current = self.scopes.last_mut().expect("global scope always present");
 
         if current.contains_key(&name) {
             return Err(TypeError {
                 message: format!("redefinition of `{name}`"),
+                span,
             });
         }
 

@@ -12,6 +12,20 @@ pub enum Type {
     Array(Box<Type>),
 }
 
+impl std::fmt::Display for Type {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Type::Number => f.write_str("Number"),
+            Type::String => f.write_str("String"),
+            Type::Boolean => f.write_str("Boolean"),
+            Type::Object => f.write_str("Object"),
+            Type::Void => f.write_str("Void"),
+            Type::Null => f.write_str("null"),
+            Type::Array(inner) => write!(f, "Array[{inner}]"),
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum ExpressionKind {
     LiteralNumber(f64),
