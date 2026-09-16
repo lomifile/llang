@@ -42,12 +42,23 @@ impl Chunk {
         out
     }
 
+    pub fn code_len(&self) -> usize {
+        self.code.len()
+    }
+
+    pub fn patch_jump(&mut self, index: usize, target: usize) {
+        match self.code[index] {
+            Op::Jump(_) => self.code[index] = Op::Jump(target),
+            Op::JumpIfFalse(_) => self.code[index] = Op::JumpIfFalse(target),
+            Op::Loop(_) => self.code[index] = Op::Loop(target),
+            _ => unreachable!(),
+        }
+    }
+
     fn constant(&self, index: usize) -> String {
         match self.constants.get(index) {
-            Some(Value::Null) => "null".to_string(),
-            Some(Value::Bool(b)) => b.to_string(),
-            Some(Value::Number(n)) => n.to_string(),
             Some(Value::Str(s)) => format!("\"{s}\""),
+            Some(value) => value.to_string(),
             None => "<out of range>".to_string(),
         }
     }
@@ -88,6 +99,14 @@ impl Chunk {
             Op::Call(c) => format!("Call -> {c}"),
             Op::Return => "Return".to_string(),
             Op::Pop => "Pop".to_string(),
+            Op::And => "And".to_string(),
+            Op::Or => "Or".to_string(),
+            Op::BuildArray(n) => format!("BuildArray -> {n}"),
+            Op::BuildObject(n) => format!("BuildObject -> {n}"),
+            Op::IndexGet => "IndexGet".to_string(),
+            Op::IndexSet => "IndexSet".to_string(),
+            Op::MemberGet(m) => format!("MemberGet {} -> {}", m, self.constant(m)),
+            Op::MemberSet(m) => format!("MemberSet {} -> {}", m, self.constant(m)),
         };
 
         format!("{index:04} {line}{op}")

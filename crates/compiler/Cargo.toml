@@ -14,3 +14,4 @@ workspace = true
 ast.workspace = true
 chunk.workspace = true
 types.workspace = true
+token.workspace = true
