@@ -748,3 +748,9 @@ fn calling_without_a_callee_below_the_arguments_underflows() {
     let err = error(vec![Op::Constant(0), Op::Call(1)], vec![Value::Number(1.0)]);
     assert_eq!(err.message, "stack underflow");
 }
+
+#[test]
+fn a_runtime_error_displays_its_line_and_message() {
+    let err = error(vec![Op::Pop], vec![]);
+    assert_eq!(err.to_string(), "1: stack underflow");
+}

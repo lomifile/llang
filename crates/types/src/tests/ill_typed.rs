@@ -98,7 +98,10 @@ fn an_empty_array_literal_has_no_inferable_type() {
 
 #[test]
 fn a_non_array_cannot_be_indexed() {
-    err_contains("let s: String = \"a\"; let c: String = s[0];", "cannot index");
+    err_contains(
+        "let s: String = \"a\"; let c: String = s[0];",
+        "cannot index",
+    );
 }
 
 #[test]
@@ -116,10 +119,7 @@ fn a_name_cannot_be_defined_twice_in_one_scope() {
 
 #[test]
 fn a_function_cannot_be_defined_twice() {
-    err_contains(
-        "function f(): Void { } function f(): Void { }",
-        "redefinit",
-    );
+    err_contains("function f(): Void { } function f(): Void { }", "redefinit");
 }
 
 #[test]

@@ -35,6 +35,8 @@ dependencies = [
  "compiler",
  "lexer",
  "parser",
+ "token",
+ "types",
  "vm",
 ]
 

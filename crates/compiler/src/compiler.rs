@@ -169,7 +169,7 @@ impl Compiler {
         }
     }
 
-    pub(crate) fn compile_declaration(&mut self, declaration: Declaration) {
+    pub fn compile_declaration(&mut self, declaration: Declaration) {
         let line = declaration.span.line;
         match declaration.kind {
             DeclarationKind::Statement(statement) => {
@@ -196,7 +196,7 @@ impl Compiler {
             DeclarationKind::Function {
                 name,
                 params,
-                return_type,
+                return_type: _,
                 body,
             } => {
                 let mut sub = Compiler::new();

@@ -1,4 +1,4 @@
-use std::{collections::HashMap, rc::Rc};
+use std::{collections::HashMap, fmt, rc::Rc};
 
 use chunk::types::{Function, Value};
 
@@ -27,3 +27,11 @@ pub enum Flow {
     Continue,
     Halt,
 }
+
+impl fmt::Display for RuntimeError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}: {}", self.line, self.message)
+    }
+}
+
+impl std::error::Error for RuntimeError {}

@@ -20,7 +20,10 @@ fn check(source: &str) -> Result<(), TypeError> {
 
 fn ok(source: &str) {
     if let Err(e) = check(source) {
-        panic!("`{source}` should type-check, got {}: {}", e.span, e.message);
+        panic!(
+            "`{source}` should type-check, got {}: {}",
+            e.span, e.message
+        );
     }
 }
 

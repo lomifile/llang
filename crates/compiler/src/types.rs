@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use chunk::types::Chunk;
 
 #[derive(Debug)]

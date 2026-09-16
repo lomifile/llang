@@ -228,11 +228,7 @@ impl Checker {
         Ok(Type::Array(Box::new(first_type)))
     }
 
-    fn type_of_index(
-        &self,
-        target: &Expression,
-        index: &Expression,
-    ) -> Result<Type, TypeError> {
+    fn type_of_index(&self, target: &Expression, index: &Expression) -> Result<Type, TypeError> {
         let target_type = self.type_of_expression(target)?;
         let index_type = self.type_of_expression(index)?;
 
