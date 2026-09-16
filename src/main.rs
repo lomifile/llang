@@ -39,7 +39,10 @@ fn run_file(path: &str) -> ExitCode {
     };
 
     match run(&source) {
-        Ok(()) => ExitCode::SUCCESS,
+        Ok(()) => {
+            println!("> Done");
+            ExitCode::SUCCESS
+        }
         Err(err) => {
             eprintln!("{err}");
             ExitCode::from(70)
@@ -54,6 +57,7 @@ fn repl() -> ExitCode {
     let mut stdin = stdin.lock();
     let mut line = String::new();
 
+    println!("> JSL compiler <");
     loop {
         print!("> ");
         if io::stdout().flush().is_err() {
@@ -84,8 +88,6 @@ fn repl() -> ExitCode {
 }
 
 fn main() -> ExitCode {
-    println!("> JSL compiler <");
-
     let mut args = std::env::args().skip(1);
 
     match (args.next(), args.next()) {
@@ -95,14 +97,5 @@ fn main() -> ExitCode {
             eprintln!("usage: jsl [file]");
             ExitCode::from(64)
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-
-    #[test]
-    fn test_ok() {
-        assert_eq!(1, 1);
     }
 }

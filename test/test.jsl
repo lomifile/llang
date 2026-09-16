@@ -1,0 +1,11 @@
+
+
+
+
+let num1: Number = 1;
+let num2: Number = 2;
+
+
+function add(a: Number, b: Number): Number {
+  return a + b;
+}
