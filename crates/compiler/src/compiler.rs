@@ -41,12 +41,9 @@ impl Compiler {
     }
 
     fn resolve_local(&self, name: &str) -> Option<usize> {
-        for i in (0..self.locals.len()).rev() {
-            if self.locals[i].name == name {
-                return Some(i);
-            }
-        }
-        None
+        (0..self.locals.len())
+            .rev()
+            .find(|&i| self.locals[i].name == name)
     }
 
     fn add_local(&mut self, name: String) {
@@ -112,14 +109,11 @@ impl Compiler {
         match &target.kind {
             ExpressionKind::Identifier(name) => {
                 self.compile_expression(value.clone());
-                match self.resolve_local(name) {
-                    Some(slot) => {
-                        self.emit(Op::SetLocal(slot), line);
-                    }
-                    None => {
-                        let i = self.chunk.add_constant(Value::Str(Rc::from(name.clone())));
-                        self.emit(Op::SetGlobal(i), line);
-                    }
+                if let Some(slot) = self.resolve_local(name) {
+                    self.emit(Op::SetLocal(slot), line);
+                } else {
+                    let i = self.chunk.add_constant(Value::Str(Rc::from(name.clone())));
+                    self.emit(Op::SetGlobal(i), line);
                 }
             }
             ExpressionKind::Index { target, index } => {
@@ -148,15 +142,14 @@ impl Compiler {
 
     fn compile_incdec(&mut self, target: &Expression, op: Op, line: u32) {
         match &target.kind {
-            ExpressionKind::Identifier(name) => match self.resolve_local(name) {
-                Some(slot) => {
+            ExpressionKind::Identifier(name) => {
+                if let Some(slot) = self.resolve_local(name) {
                     self.emit(Op::GetLocal(slot), line);
                     let one = self.chunk.add_constant(Value::Number(1.0));
                     self.emit(Op::Constant(one), line);
                     self.emit(op, line);
                     self.emit(Op::SetLocal(slot), line);
-                }
-                None => {
+                } else {
                     let i = self.chunk.add_constant(Value::Str(Rc::from(name.as_str())));
                     self.emit(Op::GetGlobal(i), line);
                     let one = self.chunk.add_constant(Value::Number(1.0));
@@ -164,7 +157,7 @@ impl Compiler {
                     self.emit(op, line);
                     self.emit(Op::SetGlobal(i), line);
                 }
-            },
+            }
             _ => unreachable!(),
         }
     }
@@ -173,18 +166,10 @@ impl Compiler {
         let line = declaration.span.line;
         match declaration.kind {
             DeclarationKind::Statement(statement) => {
-                self.compile_statement(statement);
+                self.compile_statement(*statement);
             }
-            DeclarationKind::Let { name, ty: _, init } => {
-                self.compile_expression(init);
-                if self.scope_depth == 0 {
-                    let i = self.chunk.add_constant(Value::Str(Rc::from(name)));
-                    self.emit(Op::DefineGlobal(i), line);
-                } else {
-                    self.add_local(name);
-                }
-            }
-            DeclarationKind::Const { name, ty: _, init } => {
+            DeclarationKind::Let { name, ty: _, init }
+            | DeclarationKind::Const { name, ty: _, init } => {
                 self.compile_expression(init);
                 if self.scope_depth == 0 {
                     let i = self.chunk.add_constant(Value::Str(Rc::from(name)));
@@ -299,9 +284,8 @@ impl Compiler {
 
                 self.compile_statement(*body);
 
-                match step {
-                    Some(s) => self.compile_for_step(s, line),
-                    None => {}
+                if let Some(s) = step {
+                    self.compile_for_step(s, line);
                 }
 
                 self.emit(Op::Loop(loop_start), line);
@@ -345,15 +329,14 @@ impl Compiler {
             ExpressionKind::LiteralNull => {
                 self.emit(Op::Null, line);
             }
-            ExpressionKind::Identifier(identifier) => match self.resolve_local(&identifier) {
-                Some(slot) => {
+            ExpressionKind::Identifier(identifier) => {
+                if let Some(slot) = self.resolve_local(&identifier) {
                     self.emit(Op::GetLocal(slot), line);
-                }
-                None => {
+                } else {
                     let i = self.chunk.add_constant(Value::Str(Rc::from(identifier)));
                     self.emit(Op::GetGlobal(i), line);
                 }
-            },
+            }
             ExpressionKind::BinaryOp { op, left, right } => {
                 self.compile_expression(*left);
                 self.compile_expression(*right);

@@ -236,9 +236,9 @@ fn an_identifier_resolves_to_the_innermost_local_that_shadows_it() {
     let compiler = compile_statement(block(vec![
         let_decl("x", number(1.0)),
         let_decl("x", number(2.0)),
-        declaration(DeclarationKind::Statement(expression_statement(
+        declaration(DeclarationKind::Statement(Box::new(expression_statement(
             identifier("x"),
-        ))),
+        )))),
     ]));
 
     assert_eq!(
@@ -257,13 +257,13 @@ fn an_identifier_resolves_to_the_innermost_local_that_shadows_it() {
 #[test]
 fn a_local_goes_out_of_scope_when_its_block_ends() {
     let compiler = compile_statement(block(vec![
-        declaration(DeclarationKind::Statement(block(vec![let_decl(
+        declaration(DeclarationKind::Statement(Box::new(block(vec![let_decl(
             "inner",
             number(1.0),
-        )]))),
-        declaration(DeclarationKind::Statement(expression_statement(
+        )])))),
+        declaration(DeclarationKind::Statement(Box::new(expression_statement(
             identifier("inner"),
-        ))),
+        )))),
     ]));
 
     assert_eq!(
@@ -288,12 +288,12 @@ fn assigning_to_an_unknown_name_falls_back_to_a_global_store() {
 fn an_assignment_evaluates_its_value_before_naming_its_target() {
     let compiler = compile_statement(block(vec![
         let_decl("x", number(1.0)),
-        declaration(DeclarationKind::Statement(statement(
+        declaration(DeclarationKind::Statement(Box::new(statement(
             StatementKind::Assign {
                 target: identifier("x"),
                 value: number(2.0),
             },
-        ))),
+        )))),
     ]));
 
     assert_eq!(
@@ -306,9 +306,9 @@ fn an_assignment_evaluates_its_value_before_naming_its_target() {
 fn an_increment_reads_adds_one_and_writes_back_to_the_same_slot() {
     let compiler = compile_statement(block(vec![
         let_decl("i", number(0.0)),
-        declaration(DeclarationKind::Statement(statement(
+        declaration(DeclarationKind::Statement(Box::new(statement(
             StatementKind::Increment(identifier("i")),
-        ))),
+        )))),
     ]));
 
     assert_eq!(
@@ -480,11 +480,11 @@ fn a_function_compiles_into_its_own_chunk_stored_as_a_constant() {
         ],
         return_type: Type::Number,
         body: Box::new(block(vec![declaration(DeclarationKind::Statement(
-            statement(StatementKind::Return(Some(binary(
+            Box::new(statement(StatementKind::Return(Some(binary(
                 Operator::Plus,
                 identifier("a"),
                 identifier("b"),
-            )))),
+            ))))),
         ))])),
     }));
 
@@ -521,7 +521,7 @@ fn a_function_body_cannot_see_the_enclosing_compilers_locals() {
             params: Vec::new(),
             return_type: Type::Void,
             body: Box::new(block(vec![declaration(DeclarationKind::Statement(
-                expression_statement(identifier("outer")),
+                Box::new(expression_statement(identifier("outer"))),
             ))])),
         }),
     ]));

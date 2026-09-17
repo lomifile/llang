@@ -16,7 +16,7 @@ impl Parser {
                 let parsed = self.parse_statement()?;
                 let parsed_span = parsed.span;
                 Ok(Declaration {
-                    kind: DeclarationKind::Statement(parsed),
+                    kind: DeclarationKind::Statement(Box::new(parsed)),
                     span: parsed_span,
                 })
             }

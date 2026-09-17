@@ -29,8 +29,6 @@ impl Lexer {
         self.chars.get(self.pos + 1).copied()
     }
 
-    // Use mut to copy value
-    // increment pos + 1 or col if '\n'
     fn advance(&mut self) -> Option<char> {
         let c = self.chars.get(self.pos).copied()?;
         self.pos += 1;

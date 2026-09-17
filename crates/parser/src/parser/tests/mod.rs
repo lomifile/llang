@@ -69,7 +69,7 @@ fn declaration_kind(src: &str) -> DeclarationKind {
 
 fn statement(src: &str) -> Statement {
     match declaration(src).kind {
-        DeclarationKind::Statement(s) => s,
+        DeclarationKind::Statement(s) => *s,
         other => panic!("`{src}` should be a statement, got {other:?}"),
     }
 }

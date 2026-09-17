@@ -148,11 +148,9 @@ fn blocks_nest() {
 
     assert_eq!(outer.len(), 1);
     assert!(matches!(
-        outer[0].kind,
-        DeclarationKind::Statement(Statement {
-            kind: StatementKind::Block(_),
-            ..
-        })
+        &outer[0].kind,
+        DeclarationKind::Statement(statement)
+            if matches!(statement.kind, StatementKind::Block(_))
     ));
 }
 

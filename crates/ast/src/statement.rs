@@ -139,7 +139,7 @@ pub enum DeclarationKind {
         return_type: Type,
         body: Box<Statement>,
     },
-    Statement(Statement),
+    Statement(Box<Statement>),
 }
 
 #[derive(Debug, Clone, PartialEq)]
